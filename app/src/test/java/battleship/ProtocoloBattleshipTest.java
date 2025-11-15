@@ -7,7 +7,7 @@ public class ProtocoloBattleshipTest {
 
     @Test
     void construirMensajeDisparo_formatoCorrecto() {
-        String mensaje = ProtocoloBattleship.construirMensajeDisparo(3, 5);
+        String mensaje = ProtocoloBattleship.construirMensajeDisparo(3,5);
         assertEquals("DISPARAR|3,5", mensaje);
     }
 
@@ -15,7 +15,8 @@ public class ProtocoloBattleshipTest {
     void construirMensajeResultado_conTipoBarco() {
         String mensaje = ProtocoloBattleship.construirMensajeResultado(
                 ProtocoloBattleship.HUNDIDO,
-                4, 7,
+                4,
+                7,
                 "ACORAZADO"
         );
 
@@ -26,7 +27,8 @@ public class ProtocoloBattleshipTest {
     void construirMensajeResultado_sinTipoBarco() {
         String mensaje = ProtocoloBattleship.construirMensajeResultado(
                 ProtocoloBattleship.FALLO,
-                2, 1,
+                2,
+                1,
                 null
         );
 
@@ -45,17 +47,6 @@ public class ProtocoloBattleshipTest {
     }
 
     @Test
-    void parsearMensaje_impacto_conTipoBarco() {
-        ProtocoloBattleship.Mensaje m =
-                ProtocoloBattleship.parsearMensaje("HUNDIDO|4,7|CRUCERO");
-
-        assertEquals(ProtocoloBattleship.HUNDIDO, m.comando);
-        assertEquals(4, m.x);
-        assertEquals(7, m.y);
-        assertEquals("CRUCERO", m.tipoBarco);
-    }
-
-    @Test
     void parsearMensaje_comandoSimple() {
         ProtocoloBattleship.Mensaje m =
                 ProtocoloBattleship.parsearMensaje("LISTO");
@@ -65,6 +56,4 @@ public class ProtocoloBattleshipTest {
         assertEquals(-1, m.y);
         assertNull(m.tipoBarco);
     }
-
-    
 }

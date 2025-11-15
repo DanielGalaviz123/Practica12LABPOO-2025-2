@@ -1,211 +1,197 @@
 package battleship;
 
-// JuegoBattleship.java
 import java.util.*;
 
-public class JuegoBattleship {
+public class JuegoBattleship implements JuegoTablero {
+
     private static final int TAMANIO_TABLERO = 10;
-    private char[][] tableroPropio;
-    private char[][] tableroEnemigo;
-    private Map<String, Integer> barcos;
-    private Map<String, Integer> impactosPorBarco;
-    private Set<String> posicionesDisparadas;
-    
+
+    private Tablero tableroPropio;
+    private Tablero tableroEnemigo;
+
+    private GestorBarcos flota;
+
+    private Set<Posicion> posicionesDisparadas;
+
     public JuegoBattleship() {
-        tableroPropio = new char[TAMANIO_TABLERO][TAMANIO_TABLERO];
-        tableroEnemigo = new char[TAMANIO_TABLERO][TAMANIO_TABLERO];
+        tableroPropio  = new Tablero(TAMANIO_TABLERO);
+        tableroEnemigo = new Tablero(TAMANIO_TABLERO);
         inicializarTableros();
-        
-        barcos = new HashMap<>();
-        barcos.put("PORTAAVIONES", 5);
-        barcos.put("ACORAZADO", 4);
-        barcos.put("CRUCERO", 3);
-        barcos.put("SUBMARINO", 3);
-        barcos.put("DESTRUCTOR", 2);
-        
-        impactosPorBarco = new HashMap<>();
-        for (String barco : barcos.keySet()) {
-            impactosPorBarco.put(barco, 0);
-        }
-        
+
+        flota = new GestorBarcos();
+        flota.agregarBarco(new BarcoBasico("PORTAAVIONES", 'P', 5));
+        flota.agregarBarco(new BarcoBasico("ACORAZADO",    'A', 4));
+        flota.agregarBarco(new BarcoBasico("CRUCERO",      'C', 3));
+        flota.agregarBarco(new BarcoBasico("SUBMARINO",    'S', 3));
+        flota.agregarBarco(new BarcoBasico("DESTRUCTOR",   'D', 2));
+
         posicionesDisparadas = new HashSet<>();
     }
-    
+
     private void inicializarTableros() {
-        for (int i = 0; i < TAMANIO_TABLERO; i++) {
-            for (int j = 0; j < TAMANIO_TABLERO; j++) {
-                tableroPropio[i][j] = '~'; // Agua
-                tableroEnemigo[i][j] = '?'; // Desconocido
-            }
-        }
+        tableroPropio.llenar('~');
+        tableroEnemigo.llenar('?');
     }
-    
+
+    // ================= API publica que usa BattleshipP2P =================
+
+    @Override
     public void colocarBarcosAutomaticamente() {
         Random random = new Random();
-        
-        for (Map.Entry<String, Integer> entrada : barcos.entrySet()) {
-            String nombreBarco = entrada.getKey();
-            int tamanio = entrada.getValue();
+        int limite = tableroPropio.getTamanio();
+
+        for (Barco barco : flota.getBarcos()) {
+            int tamanio    = barco.getTamanio();
             boolean colocado = false;
-            
+
             while (!colocado) {
                 boolean horizontal = random.nextBoolean();
-                int fila = random.nextInt(TAMANIO_TABLERO);
-                int columna = random.nextInt(TAMANIO_TABLERO);
-                
+                int fila    = random.nextInt(limite);
+                int columna = random.nextInt(limite);
+
                 if (puedeColocarBarco(fila, columna, tamanio, horizontal)) {
-                    colocarBarco(fila, columna, tamanio, horizontal, nombreBarco.charAt(0));
+                    colocarBarco(fila, columna, tamanio, horizontal, barco.getSimbolo());
                     colocado = true;
                 }
             }
         }
     }
-    
-    private boolean puedeColocarBarco(int fila, int columna, int tamanio, boolean horizontal) {
-        if (horizontal) {
-            if (columna + tamanio > TAMANIO_TABLERO) return false;
-            for (int i = columna; i < columna + tamanio; i++) {
-                if (tableroPropio[fila][i] != '~') return false;
-            }
-        } else {
-            if (fila + tamanio > TAMANIO_TABLERO) return false;
-            for (int i = fila; i < fila + tamanio; i++) {
-                if (tableroPropio[i][columna] != '~') return false;
-            }
-        }
-        return true;
-    }
-    
-    private void colocarBarco(int fila, int columna, int tamanio, boolean horizontal, char simbolo) {
-        if (horizontal) {
-            for (int i = columna; i < columna + tamanio; i++) {
-                tableroPropio[fila][i] = simbolo;
-            }
-        } else {
-            for (int i = fila; i < fila + tamanio; i++) {
-                tableroPropio[i][columna] = simbolo;
-            }
-        }
-    }
-    
+
+    @Override
     public boolean recibirDisparo(int fila, int columna) {
-        // Verificar si ya fue disparado aquí
-        if (tableroPropio[fila][columna] == 'X' || tableroPropio[fila][columna] == 'O') {
-            return false; // Ya fue disparado aquí
+        char actual = tableroPropio.getCelda(fila, columna);
+
+        // ya se había disparado aquí
+        if (actual == 'X' || actual == 'O') {
+            return false;
         }
-        
-        if (tableroPropio[fila][columna] != '~') {
-            // ¡Impacto! - encontrar qué barco fue golpeado
-            char caracterBarco = tableroPropio[fila][columna];
-            String tipoBarco = obtenerTipoBarcoDesdeCaracter(caracterBarco);
-            
-            // VERIFICACIÓN DE SEGURIDAD AÑADIDA
-            if (impactosPorBarco.containsKey(tipoBarco)) {
-                impactosPorBarco.put(tipoBarco, impactosPorBarco.get(tipoBarco) + 1);
+
+        // hay barco
+        if (actual != '~') {
+            Barco barco = flota.obtenerPorSimbolo(actual);
+            if (barco != null) {
+                barco.registrarImpacto();
             } else {
-                // Si el barco no está en el mapa, lo agregamos
-                System.out.println("Advertencia: Barco no registrado '" + tipoBarco + "' encontrado. Registrando...");
-                impactosPorBarco.put(tipoBarco, 1);
+                System.out.println("Advertencia: barco no registrado con simbolo '" + actual + "'");
             }
-            
-            tableroPropio[fila][columna] = 'X'; // Barco impactado
+
+            tableroPropio.setCelda(fila, columna, 'X');
             return true;
         } else {
-            tableroPropio[fila][columna] = 'O'; // Agua impactada
+            // agua
+            tableroPropio.setCelda(fila, columna, 'O');
             return false;
         }
     }
-    
+
+    @Override
     public void registrarImpacto(int fila, int columna) {
-        tableroEnemigo[fila][columna] = 'X';
-        posicionesDisparadas.add(fila + "," + columna);
+        tableroEnemigo.setCelda(fila, columna, 'X');
+        posicionesDisparadas.add(new Posicion(fila, columna));
     }
-    
+
+    @Override
     public void registrarFallo(int fila, int columna) {
-        tableroEnemigo[fila][columna] = 'O';
-        posicionesDisparadas.add(fila + "," + columna);
+        tableroEnemigo.setCelda(fila, columna, 'O');
+        posicionesDisparadas.add(new Posicion(fila, columna));
     }
-    
+
+    @Override
     public boolean yaDisparado(int fila, int columna) {
-        return posicionesDisparadas.contains(fila + "," + columna);
+        return posicionesDisparadas.contains(new Posicion(fila, columna));
     }
-    
+
+    @Override
     public String obtenerTipoBarcoEn(int fila, int columna) {
-        char c = tableroPropio[fila][columna];
-        // Si es un impacto previo, buscar en la posición original
+        char c = tableroPropio.getCelda(fila, columna);
+
         if (c == 'X') {
-            // En un juego real necesitarías guardar el tipo de barco original
-            // Por ahora retornamos "DESCONOCIDO"
             return "DESCONOCIDO";
         }
-        return obtenerTipoBarcoDesdeCaracter(c);
+
+        return flota.obtenerNombrePorSimbolo(c);
     }
-    
-    private String obtenerTipoBarcoDesdeCaracter(char c) {
-        switch (c) {
-            case 'P': return "PORTAAVIONES";
-            case 'A': return "ACORAZADO";
-            case 'C': return "CRUCERO";
-            case 'S': return "SUBMARINO";
-            case 'D': return "DESTRUCTOR";
-            default: return "DESCONOCIDO";
-        }
-    }
-    
+
+    @Override
     public boolean estaBarcoHundido(String tipoBarco) {
-        // VERIFICACIÓN DE SEGURIDAD AÑADIDA
-        if (!impactosPorBarco.containsKey(tipoBarco) || !barcos.containsKey(tipoBarco)) {
-            return false;
-        }
-        
-        int impactos = impactosPorBarco.get(tipoBarco);
-        int tamanio = barcos.get(tipoBarco);
-        return impactos >= tamanio;
+        return flota.estaHundido(tipoBarco);
     }
-    
+
+    @Override
     public boolean todosBarcosHundidos() {
-        for (String barco : barcos.keySet()) {
-            if (!estaBarcoHundido(barco)) {
-                return false;
-            }
-        }
-        return true;
+        return flota.todosHundidos();
     }
-    
+
+    @Override
     public void mostrarTableroPropio() {
         System.out.println("\n=== TU TABLERO ===");
         mostrarTablero(tableroPropio);
-        
-        // Mostrar estado de barcos
+
         System.out.println("\nEstado de tus barcos:");
-        for (String barco : barcos.keySet()) {
-            int impactos = impactosPorBarco.getOrDefault(barco, 0);
-            int tamanio = barcos.get(barco);
-            String estado = (impactos >= tamanio) ? "HUNDIDO" : impactos + "/" + tamanio;
-            System.out.println("  " + barco + ": " + estado);
+        for (Barco barco : flota.getBarcos()) {
+            int impactos = barco.getImpactos();
+            int tamanio  = barco.getTamanio();
+            String estado = barco.estaHundido()
+                    ? "HUNDIDO"
+                    : impactos + "/" + tamanio;
+            System.out.println("  " + barco.getNombre() + ": " + estado);
         }
     }
-    
+
+    @Override
     public void mostrarTableroEnemigo() {
         System.out.println("\n=== TABLERO ENEMIGO ===");
         mostrarTablero(tableroEnemigo);
     }
-    
-    private void mostrarTablero(char[][] tablero) {
+
+    // ================= ayuda interna =================
+
+    private boolean puedeColocarBarco(int fila, int columna, int tamanio, boolean horizontal) {
+        int limite = tableroPropio.getTamanio();
+
+        if (horizontal) {
+            if (columna + tamanio > limite) return false;
+            for (int i = columna; i < columna + tamanio; i++) {
+                if (tableroPropio.getCelda(fila, i) != '~') return false;
+            }
+        } else {
+            if (fila + tamanio > limite) return false;
+            for (int i = fila; i < fila + tamanio; i++) {
+                if (tableroPropio.getCelda(i, columna) != '~') return false;
+            }
+        }
+        return true;
+    }
+
+    private void colocarBarco(int fila, int columna, int tamanio, boolean horizontal, char simbolo) {
+        if (horizontal) {
+            for (int i = columna; i < columna + tamanio; i++) {
+                tableroPropio.setCelda(fila, i, simbolo);
+            }
+        } else {
+            for (int i = fila; i < fila + tamanio; i++) {
+                tableroPropio.setCelda(i, columna, simbolo);
+            }
+        }
+    }
+
+    private void mostrarTablero(Tablero tablero) {
+        int limite = tablero.getTamanio();
+
         System.out.print("  ");
-        for (int i = 0; i < TAMANIO_TABLERO; i++) {
+        for (int i = 0; i < limite; i++) {
             System.out.print(i + " ");
         }
         System.out.println();
-        
-        for (int i = 0; i < TAMANIO_TABLERO; i++) {
+
+        for (int i = 0; i < limite; i++) {
             System.out.print(i + " ");
-            for (int j = 0; j < TAMANIO_TABLERO; j++) {
-                System.out.print(tablero[i][j] + " ");
+            for (int j = 0; j < limite; j++) {
+                System.out.print(tablero.getCelda(i, j) + " ");
             }
             System.out.println();
         }
-        
+
         System.out.println("\nLeyenda: ~=Agua, ?=Desconocido, X=Impacto, O=Fallo, Letras=Barcos");
     }
 }
