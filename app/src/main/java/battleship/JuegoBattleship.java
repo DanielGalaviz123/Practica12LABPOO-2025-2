@@ -194,4 +194,17 @@ public class JuegoBattleship implements JuegoTablero {
 
         System.out.println("\nLeyenda: ~=Agua, ?=Desconocido, X=Impacto, O=Fallo, Letras=Barcos");
     }
+
+
+     public int getTamanioTablero() {
+        return tableroPropio.getTamanio();
+    }
+
+    public char getCeldaPropia(int fila, int columna) {
+        return tableroPropio.getCelda(fila, columna);
+    }
+
+    public char getCeldaEnemiga(int fila, int columna) {
+        return tableroEnemigo.getCelda(fila, columna);
+    }
 }
