@@ -184,7 +184,12 @@ public class BattleshipP2P implements JuegoEnLiena {
         } catch (IOException e) {
             System.err.println("Error al cerrar conexión: " + e.getMessage());
         }
+
+
+
+        
     }
+
 
     public static void main(String[] args) {
         BattleshipP2P juego = new BattleshipP2P();
