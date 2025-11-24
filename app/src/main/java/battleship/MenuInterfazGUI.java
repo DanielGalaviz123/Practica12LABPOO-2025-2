@@ -24,7 +24,7 @@ public class MenuInterfazGUI extends JFrame {
         titulo.setFont(new Font("Arial", Font.BOLD, 22));
 
         botonConsola = new JButton("Modo consola");
-        botonGrafica = new JButton("Modo grafico (tablero)");
+        botonGrafica = new JButton("Modo grafico (P2P)");
         botonSalir   = new JButton("Salir");
 
         JPanel panelBotones = new JPanel(new GridLayout(3, 1, 10, 10));
@@ -44,83 +44,84 @@ public class MenuInterfazGUI extends JFrame {
 
     private void configurarAcciones() {
 
-    // === MODO CONSOLA (igual que antes) ===
-    botonConsola.addActionListener(e -> {
-        dispose(); // cierro la GUI y sigo todo en consola
+        // === MODO CONSOLA (tu implementacion original) ===
+        botonConsola.addActionListener(e -> {
+            dispose(); // cierro el menu y sigo en consola
 
-        new Thread(() -> {
-            BattleshipP2P juegoP2P = new BattleshipP2P();
-            juegoP2P.iniciar();   // flujo original por consola
-        }).start();
-    });
+            new Thread(() -> {
+                BattleshipP2P juegoP2P = new BattleshipP2P();
+                juegoP2P.iniciar();
+            }).start();
+        });
 
-    // === MODO GRAFICO ===
-    botonGrafica.addActionListener(e -> {
+        // === MODO GRAFICO P2P ===
+        botonGrafica.addActionListener(e -> {
 
-        // 1) Pedir nombre
-        String nombre = JOptionPane.showInputDialog(
-                this,
-                "Ingresa tu nombre:",
-                "Nombre jugador",
-                JOptionPane.QUESTION_MESSAGE
-        );
-        if (nombre == null || nombre.trim().isEmpty()) {
-            return; // cancelado
-        }
-
-        // 2) Preguntar rol (como en consola)
-        Object[] opciones = { "Servidor (crear partida)", "Cliente (unirse a partida)" };
-        int opcion = JOptionPane.showOptionDialog(
-                this,
-                "Selecciona el rol:",
-                "Modo grafico",
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                opciones,
-                opciones[0]
-        );
-        if (opcion == JOptionPane.CLOSED_OPTION) {
-            return;
-        }
-
-        boolean esServidor = (opcion == 0);
-        String ipServidor = null;
-
-        // Si es cliente, pedir IP (igual que haces en consola)
-        if (!esServidor) {
-            ipServidor = JOptionPane.showInputDialog(
+            // 1) Pedir nombre
+            String nombre = JOptionPane.showInputDialog(
                     this,
-                    "Ingresa la IP del servidor:",
-                    "Direccion del servidor",
+                    "Ingresa tu nombre:",
+                    "Nombre jugador",
                     JOptionPane.QUESTION_MESSAGE
             );
-            if (ipServidor == null || ipServidor.trim().isEmpty()) {
+            if (nombre == null || nombre.trim().isEmpty()) {
+                return; // cancelado
+            }
+
+            // 2) Preguntar rol
+            Object[] opciones = { "Servidor (crear partida)", "Cliente (unirse a partida)" };
+            int opcion = JOptionPane.showOptionDialog(
+                    this,
+                    "Selecciona el rol:",
+                    "Modo grafico P2P",
+                    JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    opciones,
+                    opciones[0]
+            );
+            if (opcion == JOptionPane.CLOSED_OPTION) {
                 return;
             }
-        }
 
-        // 3) Crear la logica de juego para la GUI
-        JuegoBattleship juegoGrafico = new JuegoBattleship();
-        juegoGrafico.colocarBarcosAutomaticamente();
+            boolean esServidor = (opcion == 0);
+            String ipServidor = null;
 
-        // 4) Abrir el tablero grafico con esos datos
-        TableroGUI ventanaTablero =
-                new TableroGUI(juegoGrafico, nombre, esServidor, ipServidor);
+            if (!esServidor) {
+                ipServidor = JOptionPane.showInputDialog(
+                        this,
+                        "Ingresa la IP del servidor:",
+                        "Direccion del servidor",
+                        JOptionPane.QUESTION_MESSAGE
+                );
+                if (ipServidor == null || ipServidor.trim().isEmpty()) {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Debes ingresar una IP valida para conectarte como cliente.",
+                            "IP requerida",
+                            JOptionPane.WARNING_MESSAGE
+                    );
+                    return;
+                }
+            }
 
-        ventanaTablero.setVisible(true);
+            // 3) Crear la logica de juego para este jugador
+            JuegoBattleship juegoJugador = new JuegoBattleship();
 
-        // Opcional: cerrar el menu de seleccion
-        dispose();
-    });
+            // 4) Crear el integrador P2P grafico y arrancar la partida en un hilo aparte
+            IntegradorBattleship integrador =
+                    new IntegradorBattleship(juegoJugador, nombre, esServidor, ipServidor);
 
-    botonSalir.addActionListener(e -> System.exit(0));
-}
+            new Thread(integrador::iniciar).start();
 
+            // Cerrar el menu
+            dispose();
+        });
 
+        botonSalir.addActionListener(e -> System.exit(0));
+    }
 
-    // Ya no necesitamos main aqui si usas BattleshipMain,
-    // pero si quieres dejarlo para pruebas rapidas:
+    // Main de prueba
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             JuegoBattleship juego = new JuegoBattleship();

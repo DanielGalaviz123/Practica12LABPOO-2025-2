@@ -19,7 +19,10 @@ public class TableroGUI extends JFrame {
     private final boolean esServidor;
     private final String ipServidor;
 
-    // === Constructor principal: recibe toda la informacion ===
+    // el integrador se asigna por setter
+    private IntegradorBattleship integrador; // puede ser null
+
+    // === Constructor principal (4 parametros) ===
     public TableroGUI(JuegoBattleship juego,
                       String nombreJugador,
                       boolean esServidor,
@@ -93,14 +96,14 @@ public class TableroGUI extends JFrame {
         setLocationRelativeTo(null);
 
         actualizarTableroPropioDesdeJuego();
+        actualizarTableroEnemigoDesdeJuego();
     }
 
-    // === Constructor de comodidad: solo juego (para pruebas o uso interno) ===
+    // === Constructores de comodidad para pruebas ===
     public TableroGUI(JuegoBattleship juego) {
         this(juego, "Jugador", true, null);
     }
 
-    // === Constructor sin parametros: crea un juego por defecto ===
     public TableroGUI() {
         this(crearJuegoPorDefecto(), "Jugador", true, null);
     }
@@ -109,6 +112,11 @@ public class TableroGUI extends JFrame {
         JuegoBattleship juego = new JuegoBattleship();
         juego.colocarBarcosAutomaticamente();
         return juego;
+    }
+
+    // === Setter para el integrador ===
+    public void setIntegrador(IntegradorBattleship integrador) {
+        this.integrador = integrador;
     }
 
     private JPanel crearPanelPropio() {
@@ -157,10 +165,15 @@ public class TableroGUI extends JFrame {
                 int c = col;
 
                 boton.addActionListener(e -> {
-                    String texto = "Click en (" + f + "," + c + ")";
-                    System.out.println(texto);
-                    etiquetaEstado.setText(texto);
-                    // aqui despues conectas con juego.disparar(f, c);
+                    if (integrador != null) {
+                        // modo integrado: avisamos al Integrador
+                        integrador.manejarClickEnEnemigo(f, c);
+                    } else {
+                        // modo prueba: solo mostramos el click
+                        String texto = "Click en (" + f + "," + c + ")";
+                        System.out.println(texto);
+                        etiquetaEstado.setText(texto);
+                    }
                 });
 
                 panel.add(boton);
@@ -171,7 +184,9 @@ public class TableroGUI extends JFrame {
         return panel;
     }
 
-    private void actualizarTableroPropioDesdeJuego() {
+    // ========= Metodos que usa el Integrador =========
+
+    public void actualizarTableroPropioDesdeJuego() {
         int limite = juego.getTamanioTablero();
 
         for (int fila = 0; fila < limite; fila++) {
@@ -184,7 +199,16 @@ public class TableroGUI extends JFrame {
                     celda.setBackground(Color.WHITE);
                     celda.setForeground(Color.DARK_GRAY);
                     celda.setText("~");
+                } else if (celdaModelo == 'X') {
+                    celda.setBackground(Color.RED.darker());
+                    celda.setForeground(Color.WHITE);
+                    celda.setText("X");
+                } else if (celdaModelo == 'O') {
+                    celda.setBackground(Color.LIGHT_GRAY);
+                    celda.setForeground(Color.BLACK);
+                    celda.setText("O");
                 } else {
+                    // letra de barco
                     celda.setBackground(Color.BLACK);
                     celda.setForeground(Color.WHITE);
                     celda.setText(String.valueOf(celdaModelo));
@@ -192,6 +216,54 @@ public class TableroGUI extends JFrame {
             }
         }
     }
+
+    public void actualizarTableroEnemigoDesdeJuego() {
+        int limite = juego.getTamanioTablero();
+
+        for (int fila = 0; fila < limite; fila++) {
+            for (int col = 0; col < limite; col++) {
+
+                char celdaModelo = juego.getCeldaEnemiga(fila, col);
+                JButton boton    = botonesEnemigo[fila][col];
+
+                if (celdaModelo == '?' || celdaModelo == '~') {
+                    boton.setEnabled(true);
+                    boton.setIcon(iconoAgua);
+                    boton.setText("");
+                } else if (celdaModelo == 'X') {
+                    boton.setEnabled(false);
+                    boton.setIcon(null);
+                    boton.setText("X");
+                } else if (celdaModelo == 'O') {
+                    boton.setEnabled(false);
+                    boton.setIcon(null);
+                    boton.setText("O");
+                } else {
+                    boton.setEnabled(false);
+                    boton.setIcon(null);
+                    boton.setText(String.valueOf(celdaModelo));
+                }
+            }
+        }
+    }
+
+    public void mostrarMensaje(String mensaje) {
+        JOptionPane.showMessageDialog(this, mensaje);
+    }
+
+    public void mostrarMensajeTurno(String mensaje) {
+        etiquetaEstado.setText(mensaje);
+    }
+
+    public void bloquearTableroEnemigo() {
+        for (int fila = 0; fila < botonesEnemigo.length; fila++) {
+            for (int col = 0; col < botonesEnemigo[fila].length; col++) {
+                botonesEnemigo[fila][col].setEnabled(false);
+            }
+        }
+    }
+
+    // ================================================
 
     private ImageIcon cargarIconoEscalado(String ruta, int ancho, int alto) {
         URL url = getClass().getResource(ruta);
@@ -205,6 +277,7 @@ public class TableroGUI extends JFrame {
         return new ImageIcon(imgEscalada);
     }
 
+    // Main de prueba independiente (opcional)
     public static void main(String[] args) {
         try {
             for (UIManager.LookAndFeelInfo info :
