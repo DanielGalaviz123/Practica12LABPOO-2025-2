@@ -1,4 +1,7 @@
-package battleship;
+package battleship.interfaces;
+
+import battleship.interfaces.Hundible;
+
 
 public interface Hundible {
 

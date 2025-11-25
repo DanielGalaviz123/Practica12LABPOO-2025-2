@@ -1,4 +1,4 @@
-package battleship;
+package battleship.interfaces;
 
 public interface JuegoTablero {
 

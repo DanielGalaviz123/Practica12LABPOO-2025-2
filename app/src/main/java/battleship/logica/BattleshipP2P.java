@@ -1,8 +1,15 @@
-package battleship;
+package battleship.logica;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.Scanner;
+
+import battleship.interfaces.JuegoEnLiena;
+import battleship.interfaces.JuegoTablero;
 
 public class BattleshipP2P implements JuegoEnLiena {
 
@@ -190,9 +197,4 @@ public class BattleshipP2P implements JuegoEnLiena {
         
     }
 
-
-    public static void main(String[] args) {
-        BattleshipP2P juego = new BattleshipP2P();
-        juego.iniciar();
-    }
 }

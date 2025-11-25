@@ -1,8 +1,9 @@
 package battleship;
 
+import battleship.logica.JuegoBattleship;
+
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
-
 public class JuegoBattleshipTest {
 
     @Test

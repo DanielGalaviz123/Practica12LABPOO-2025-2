@@ -1,8 +1,11 @@
-package battleship;
+package battleship.gui;
 
 import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
+
+import battleship.logica.JuegoBattleship;
+import battleship.logica.IntegradorBattleship;
 
 public class TableroGUI extends JFrame {
 
@@ -19,14 +22,9 @@ public class TableroGUI extends JFrame {
     private final boolean esServidor;
     private final String ipServidor;
 
-    // el integrador se asigna por setter
-    private IntegradorBattleship integrador; // puede ser null
+    private IntegradorBattleship integrador;
 
-    // === Constructor principal (4 parametros) ===
-    public TableroGUI(JuegoBattleship juego,
-                      String nombreJugador,
-                      boolean esServidor,
-                      String ipServidor) {
+    public TableroGUI(JuegoBattleship juego,String nombreJugador,boolean esServidor,String ipServidor) {
 
         super("Battleship - Tableros");
 
@@ -99,7 +97,6 @@ public class TableroGUI extends JFrame {
         actualizarTableroEnemigoDesdeJuego();
     }
 
-    // === Constructores de comodidad para pruebas ===
     public TableroGUI(JuegoBattleship juego) {
         this(juego, "Jugador", true, null);
     }
@@ -114,7 +111,6 @@ public class TableroGUI extends JFrame {
         return juego;
     }
 
-    // === Setter para el integrador ===
     public void setIntegrador(IntegradorBattleship integrador) {
         this.integrador = integrador;
     }
@@ -166,10 +162,8 @@ public class TableroGUI extends JFrame {
 
                 boton.addActionListener(e -> {
                     if (integrador != null) {
-                        // modo integrado: avisamos al Integrador
                         integrador.manejarClickEnEnemigo(f, c);
                     } else {
-                        // modo prueba: solo mostramos el click
                         String texto = "Click en (" + f + "," + c + ")";
                         System.out.println(texto);
                         etiquetaEstado.setText(texto);
@@ -183,8 +177,6 @@ public class TableroGUI extends JFrame {
 
         return panel;
     }
-
-    // ========= Metodos que usa el Integrador =========
 
     public void actualizarTableroPropioDesdeJuego() {
         int limite = juego.getTamanioTablero();
@@ -208,7 +200,6 @@ public class TableroGUI extends JFrame {
                     celda.setForeground(Color.BLACK);
                     celda.setText("O");
                 } else {
-                    // letra de barco
                     celda.setBackground(Color.BLACK);
                     celda.setForeground(Color.WHITE);
                     celda.setText(String.valueOf(celdaModelo));
@@ -263,8 +254,6 @@ public class TableroGUI extends JFrame {
         }
     }
 
-    // ================================================
-
     private ImageIcon cargarIconoEscalado(String ruta, int ancho, int alto) {
         URL url = getClass().getResource(ruta);
         if (url == null) {
@@ -277,7 +266,6 @@ public class TableroGUI extends JFrame {
         return new ImageIcon(imgEscalada);
     }
 
-    // Main de prueba independiente (opcional)
     public static void main(String[] args) {
         try {
             for (UIManager.LookAndFeelInfo info :

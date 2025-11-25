@@ -1,6 +1,8 @@
-package battleship;
+package battleship.logica;
 
 import javax.swing.SwingUtilities;
+
+import battleship.gui.MenuInterfazGUI;
 
 public class BattleshipMain {
 

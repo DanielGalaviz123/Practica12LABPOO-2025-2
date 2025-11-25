@@ -1,5 +1,8 @@
-package battleship;
+package battleship.interfaces;
 
+import java.awt.event.*;
+
+import battleship.logica.*;
 
 public interface ManejadorEventosJuego {
     //guardar

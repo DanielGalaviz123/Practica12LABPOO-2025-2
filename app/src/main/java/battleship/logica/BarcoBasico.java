@@ -1,4 +1,6 @@
-package battleship;
+package battleship.logica;
+
+import battleship.abstractas.Barco;
 
 public class BarcoBasico extends Barco {
 

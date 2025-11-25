@@ -1,4 +1,4 @@
-package battleship;
+package battleship.logica;
 
 public class Jugador {
 

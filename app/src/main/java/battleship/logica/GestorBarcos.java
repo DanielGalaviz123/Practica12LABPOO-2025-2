@@ -1,6 +1,8 @@
-package battleship;
+package battleship.logica;
 
 import java.util.*;
+
+import battleship.abstractas.Barco;
 
 public class GestorBarcos {
 

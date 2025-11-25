@@ -1,6 +1,9 @@
-package battleship;
-
+package battleship.logica;
+import battleship.gui.ReproductorSonido;
 import javax.swing.SwingUtilities;
+
+import battleship.gui.TableroGUI;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -8,16 +11,7 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-/**
- * IntegradorBattleship (modo grafico P2P).
- *
- * - Maneja la conexion P2P (servidor/cliente).
- * - Crea y controla la ventana TableroGUI.
- * - Coordina los turnos y el envio/recepcion de mensajes usando ProtocoloBattleship.
- * - Recibe los clicks del jugador desde TableroGUI mediante manejarClickEnEnemigo().
- *
- * NO cambia la logica de JuegoBattleship: solo llama a sus metodos.
- */
+
 public class IntegradorBattleship {
 
     private static final int PUERTO = 12345;
@@ -25,7 +19,7 @@ public class IntegradorBattleship {
     private final JuegoBattleship juego;
     private final String nombreJugador;
     private final boolean esServidor;
-    private final String ipServidor; // null si somos servidor
+    private final String ipServidor; 
 
     private TableroGUI tableroGUI;
 
@@ -34,7 +28,7 @@ public class IntegradorBattleship {
     private PrintWriter salida;
     private BufferedReader entrada;
 
-    // Sincronizacion entre hilo de red y clicks de la GUI
+    
     private final Object monitorDisparo = new Object();
     private int disparoFila = -1;
     private int disparoColumna = -1;
@@ -42,39 +36,43 @@ public class IntegradorBattleship {
     private boolean turnoJugador;
     private boolean juegoTerminado = false;
 
-    public IntegradorBattleship(JuegoBattleship juego,
-                                String nombreJugador,
-                                boolean esServidor,
-                                String ipServidor) {
+    public IntegradorBattleship(JuegoBattleship juego,String nombreJugador,boolean esServidor,String ipServidor) {
         this.juego = juego;
         this.nombreJugador = nombreJugador;
         this.esServidor = esServidor;
         this.ipServidor = ipServidor;
     }
 
-    /**
-     * Punto de entrada del modo grafico P2P.
-     * Llamalo desde un hilo aparte (desde el menu).
-     */
-    public void iniciar() {
-        try {
-            conectar();
-            intercambioNombres();
-            prepararTablero();
-            handshakeListo();
-            bucleJuego();
-        } catch (Exception e) {
-            e.printStackTrace();
-            if (tableroGUI != null) {
-                final String msg = "Error de conexion: " + e.getMessage();
-                SwingUtilities.invokeLater(() -> tableroGUI.mostrarMensaje(msg));
-            }
-        } finally {
-            cerrarConexion();
-        }
-    }
+    
+   public void iniciar() {
+    try {
+        conectar();
+        intercambioNombres();
+        prepararTablero();
 
-    // =================== Conexion y handshake ===================
+        // Musica de fondo durante la partida
+        ReproductorSonido.iniciarMusicaFondo();
+
+        handshakeListo();
+        bucleJuego();
+    } catch (Exception e) {
+        e.printStackTrace();
+        if (tableroGUI != null) {
+            final String msg = "Error de conexion: " + e.getMessage();
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    tableroGUI.mostrarMensaje(msg);
+                }
+            });
+        }
+    } finally {
+        cerrarConexion();
+    }
+}
+
+
+   
 
     private void conectar() throws IOException {
         if (esServidor) {
@@ -105,10 +103,10 @@ public class IntegradorBattleship {
     }
 
     private void prepararTablero() throws Exception {
-        // Colocamos barcos de este jugador
+        
         juego.colocarBarcosAutomaticamente();
 
-        // Crear la GUI en el hilo de eventos
+        
         SwingUtilities.invokeAndWait(() -> {
             tableroGUI = new TableroGUI(juego, nombreJugador, esServidor, ipServidor);
             tableroGUI.setIntegrador(this);
@@ -118,13 +116,13 @@ public class IntegradorBattleship {
 
     private void handshakeListo() throws IOException {
         if (esServidor) {
-            // el servidor inicia
+            
             salida.println(ProtocoloBattleship.LISTO);
             String resp = entrada.readLine();
             System.out.println("Respuesta LISTO de cliente: " + resp);
             turnoJugador = true;
         } else {
-            // el cliente espera primero
+            
             String resp = entrada.readLine();
             System.out.println("LISTO recibido del servidor: " + resp);
             salida.println(ProtocoloBattleship.LISTO);
@@ -132,7 +130,7 @@ public class IntegradorBattleship {
         }
     }
 
-    // ======================= Bucle principal =======================
+    
 
     private void bucleJuego() throws IOException {
         while (!juegoTerminado) {
@@ -144,7 +142,7 @@ public class IntegradorBattleship {
         }
     }
 
-    // ---------- Turno local (jugador frente a la GUI) ----------
+    
 
     private void turnoJugador() throws IOException {
         SwingUtilities.invokeLater(
@@ -154,11 +152,11 @@ public class IntegradorBattleship {
         int fila;
         int columna;
 
-        // Esperar un disparo valido (no repetido)
+        
         while (true) {
             int[] disparo = esperarDisparoJugador();
             if (disparo == null) {
-                return; // juegoTerminado durante la espera
+                return; 
             }
             fila = disparo[0];
             columna = disparo[1];
@@ -171,11 +169,11 @@ public class IntegradorBattleship {
             }
         }
 
-        // Enviar disparo al oponente
+        
         String mensajeDisparo = ProtocoloBattleship.construirMensajeDisparo(fila, columna);
         salida.println(mensajeDisparo);
 
-        // Esperar respuesta (IMPACTO/FALLO/HUNDIDO/JUEGO_TERMINADO)
+        
         String respuesta = entrada.readLine();
         if (respuesta == null) {
             juegoTerminado = true;
@@ -184,15 +182,13 @@ public class IntegradorBattleship {
 
         procesarRespuestaDisparoDelOponente(respuesta, fila, columna);
 
-        // Si el juego no ha terminado, pasa el turno al rival
+        
         if (!juegoTerminado) {
             turnoJugador = false;
         }
     }
 
-    /**
-     * Espera hasta que el jugador haga click en una casilla enemiga.
-     */
+   
     private int[] esperarDisparoJugador() {
         synchronized (monitorDisparo) {
             while (!juegoTerminado && disparoFila < 0) {
@@ -213,12 +209,10 @@ public class IntegradorBattleship {
         }
     }
 
-    /**
-     * Lo llama TableroGUI cuando haces click en una casilla enemiga.
-     */
+    
     public void manejarClickEnEnemigo(int fila, int columna) {
         synchronized (monitorDisparo) {
-            // Solo tiene efecto si es tu turno y no hay un disparo pendiente
+            
             if (!turnoJugador || disparoFila >= 0) {
                 return;
             }
@@ -263,7 +257,7 @@ public class IntegradorBattleship {
                 break;
             }
             case ProtocoloBattleship.JUEGO_TERMINADO: {
-                // Ultimo impacto para pintar bien el tablero enemigo
+                
                 juego.registrarImpacto(fila, columna);
                 juegoTerminado = true;
 
@@ -276,12 +270,12 @@ public class IntegradorBattleship {
                 break;
             }
             default:
-                // comando inesperado, lo ignoramos
+                
                 break;
         }
     }
 
-    // ---------- Turno del rival ----------
+    
 
     private void turnoRival() throws IOException {
         SwingUtilities.invokeLater(
@@ -298,7 +292,7 @@ public class IntegradorBattleship {
         String comando = partes[0];
 
         if (!ProtocoloBattleship.DISPARAR.equals(comando)) {
-            // mensaje inesperado
+            
             return;
         }
 
@@ -306,13 +300,12 @@ public class IntegradorBattleship {
         int fila = Integer.parseInt(coords[0]);
         int columna = Integer.parseInt(coords[1]);
 
-        // El rival dispara a nuestro tablero propio
+        
         boolean impacto = juego.recibirDisparo(fila, columna);
 
-        // Aqui podrias obtener el tipo real del barco si quieres
         String tipoBarco = "barco";
 
-        // Actualizar tablero propio en la GUI
+        
         SwingUtilities.invokeLater(() -> tableroGUI.actualizarTableroPropioDesdeJuego());
 
         String respuesta;
@@ -327,7 +320,7 @@ public class IntegradorBattleship {
                     tableroGUI.bloquearTableroEnemigo();
                 });
             } else {
-                // Aqui podrias diferenciar IMPACTO y HUNDIDO si tu juego lo soporta
+                
                 respuesta = ProtocoloBattleship.IMPACTO + "|" + fila + "," + columna + "|" + tipoBarco;
             }
         } else {
@@ -341,7 +334,7 @@ public class IntegradorBattleship {
         }
     }
 
-    // ======================= Limpieza =======================
+    
 
     private void cerrarConexion() {
         try {
@@ -354,5 +347,8 @@ public class IntegradorBattleship {
         try {
             if (serverSocket != null) serverSocket.close();
         } catch (IOException ignored) {}
+
+        // Detener musica de fondo
+        ReproductorSonido.detenerMusicaFondo();
     }
 }

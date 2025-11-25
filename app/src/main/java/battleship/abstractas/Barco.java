@@ -1,4 +1,6 @@
-package battleship;
+package battleship.abstractas;
+
+import battleship.interfaces.Hundible;
 
 public abstract class Barco implements Hundible {
 

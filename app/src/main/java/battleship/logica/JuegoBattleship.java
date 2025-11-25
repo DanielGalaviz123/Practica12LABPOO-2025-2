@@ -1,6 +1,9 @@
-package battleship;
+package battleship.logica;
 
 import java.util.*;
+
+import battleship.abstractas.Barco;
+import battleship.interfaces.JuegoTablero;
 
 public class JuegoBattleship implements JuegoTablero {
 

@@ -1,5 +1,8 @@
 package battleship;
 
+import battleship.abstractas.Barco;
+import battleship.logica.BarcoBasico;
+
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 

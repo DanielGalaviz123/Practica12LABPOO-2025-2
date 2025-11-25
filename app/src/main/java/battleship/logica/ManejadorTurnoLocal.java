@@ -1,9 +1,11 @@
-package battleship;
+package battleship.logica;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Scanner;
+
+import battleship.interfaces.JuegoTablero;
 
 public class ManejadorTurnoLocal {
 

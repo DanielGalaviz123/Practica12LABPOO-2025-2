@@ -1,7 +1,13 @@
-package battleship;
+package battleship.gui;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
+
+import battleship.logica.BattleshipP2P;
+import battleship.logica.IntegradorBattleship;
+import battleship.logica.JuegoBattleship;
+import battleship.interfaces.*;
 
 public class MenuInterfazGUI extends JFrame {
 
@@ -11,9 +17,15 @@ public class MenuInterfazGUI extends JFrame {
     private JButton botonGrafica;
     private JButton botonSalir;
 
+    private VentanaDeEsperaGUI ventanaEspera;
+
     public MenuInterfazGUI(JuegoBattleship juego) {
         super("Battleship - seleccion de interfaz");
         this.juego = juego;
+
+         // ===== NUEVO: iniciar musica de fondo desde el menu =====
+        ReproductorSonido.iniciarMusicaFondo();
+        // =====
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(400, 250);
@@ -33,7 +45,8 @@ public class MenuInterfazGUI extends JFrame {
         panelBotones.add(botonSalir);
 
         JPanel panelPrincipal = new JPanel(new BorderLayout(10, 10));
-        panelPrincipal.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panelPrincipal.setBorder(
+                BorderFactory.createEmptyBorder(20, 20, 20, 20));
         panelPrincipal.add(titulo, BorderLayout.NORTH);
         panelPrincipal.add(panelBotones, BorderLayout.CENTER);
 
@@ -44,9 +57,9 @@ public class MenuInterfazGUI extends JFrame {
 
     private void configurarAcciones() {
 
-        // === MODO CONSOLA (tu implementacion original) ===
+        // ===== MODO CONSOLA =====
         botonConsola.addActionListener(e -> {
-            dispose(); // cierro el menu y sigo en consola
+            dispose();
 
             new Thread(() -> {
                 BattleshipP2P juegoP2P = new BattleshipP2P();
@@ -54,7 +67,7 @@ public class MenuInterfazGUI extends JFrame {
             }).start();
         });
 
-        // === MODO GRAFICO P2P ===
+        // ===== MODO GRAFICO P2P =====
         botonGrafica.addActionListener(e -> {
 
             // 1) Pedir nombre
@@ -65,11 +78,14 @@ public class MenuInterfazGUI extends JFrame {
                     JOptionPane.QUESTION_MESSAGE
             );
             if (nombre == null || nombre.trim().isEmpty()) {
-                return; // cancelado
+                return;
             }
 
-            // 2) Preguntar rol
-            Object[] opciones = { "Servidor (crear partida)", "Cliente (unirse a partida)" };
+            // 2) Elegir rol
+            Object[] opciones = {
+                    "Servidor (crear partida)",
+                    "Cliente (unirse a partida)"
+            };
             int opcion = JOptionPane.showOptionDialog(
                     this,
                     "Selecciona el rol:",
@@ -105,23 +121,54 @@ public class MenuInterfazGUI extends JFrame {
                 }
             }
 
-            // 3) Crear la logica de juego para este jugador
-            JuegoBattleship juegoJugador = new JuegoBattleship();
+            // 3) Crear juego para este jugador
+            final JuegoBattleship juegoJugador = new JuegoBattleship();
 
-            // 4) Crear el integrador P2P grafico y arrancar la partida en un hilo aparte
-            IntegradorBattleship integrador =
-                    new IntegradorBattleship(juegoJugador, nombre, esServidor, ipServidor);
+            // 4) Crear integrador
+            final IntegradorBattleship integrador =
+                    new IntegradorBattleship(juegoJugador,
+                            nombre, esServidor, ipServidor);
 
-            new Thread(integrador::iniciar).start();
+            // 5) Crear ventana de espera (IMPORTANTE: padre null)
+            String mensajeEspera;
+            if (esServidor) {
+                mensajeEspera = "Esperando conexion del otro jugador...";
+            } else {
+                mensajeEspera = "Conectando con el servidor: " + ipServidor + "...";
+            }
 
-            // Cerrar el menu
+            ventanaEspera = new VentanaDeEsperaGUI(null, mensajeEspera);
+
+            // 6) Lanzar hilo con la logica de red
+            Thread hilo = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    integrador.iniciar();  // aqui esperas conexion y luego ya se muestra el tablero
+
+                    // Cuando terminar iniciar, cerrar la ventana de espera en el hilo de Swing
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (ventanaEspera != null) {
+                                ventanaEspera.dispose();
+                                ventanaEspera = null;
+                            }
+                        }
+                    });
+                }
+            });
+            hilo.start();
+
+            // 7) Mostrar la ventana de espera
+            ventanaEspera.setVisible(true);
+
+            // 8) Cerrar el menu (ya no afecta a la ventana porque su padre es null)
             dispose();
         });
 
         botonSalir.addActionListener(e -> System.exit(0));
     }
 
-    // Main de prueba
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             JuegoBattleship juego = new JuegoBattleship();
