@@ -10,10 +10,10 @@ public class ReproductorSonido {
 
     private static Clip musicaFondo;
 
-    // Inicia la musica de fondo en loop
+    
     public static void iniciarMusicaFondo() {
         if (musicaFondo != null && musicaFondo.isActive()) {
-            return; // ya estaba sonando
+            return; 
         }
 
         AudioInputStream audio = null;
@@ -42,7 +42,7 @@ public class ReproductorSonido {
         }
     }
 
-    // Detiene la musica de fondo
+    
     public static void detenerMusicaFondo() {
         if (musicaFondo != null) {
             musicaFondo.stop();

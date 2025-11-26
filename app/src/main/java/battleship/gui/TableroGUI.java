@@ -11,11 +11,17 @@ public class TableroGUI extends JFrame {
 
     private static final int TAMANIO = 10;
 
+    
+    private static final Color COLOR_FONDO_AGUA_PROPIO  = new Color(180, 210, 255);
+    private static final Color COLOR_TEXTO_AGUA_PROPIO  = new Color(0, 70, 130);
+    private static final Color COLOR_FONDO_AGUA_ENEMIGO = new Color(180, 210, 255);
+
     private JLabel[][]  celdasPropias;
     private JButton[][] botonesEnemigo;
 
     private JLabel etiquetaEstado;
     private ImageIcon iconoAgua;
+    private ImageIcon iconoImpacto;
 
     private final JuegoBattleship juego;
     private final String nombreJugador;
@@ -24,7 +30,8 @@ public class TableroGUI extends JFrame {
 
     private IntegradorBattleship integrador;
 
-    public TableroGUI(JuegoBattleship juego,String nombreJugador,boolean esServidor,String ipServidor) {
+    public TableroGUI(JuegoBattleship juego, String nombreJugador,
+                      boolean esServidor, String ipServidor) {
 
         super("Battleship - Tableros");
 
@@ -33,7 +40,8 @@ public class TableroGUI extends JFrame {
         this.esServidor = esServidor;
         this.ipServidor = ipServidor;
 
-        iconoAgua = cargarIconoEscalado("/battleship/img/agua.png", 32, 32);
+        iconoAgua    = cargarIconoEscalado("/battleship/img/agua.png", 32, 32);
+        iconoImpacto = cargarIconoEscalado("/battleship/img/ImpactoBarco.png", 32, 32);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout(10, 10));
@@ -52,6 +60,7 @@ public class TableroGUI extends JFrame {
         panelNorte.add(lblPropio);
         panelNorte.add(lblEnemigo);
 
+        
         JPanel panelCentro = new JPanel(new GridLayout(1, 2, 20, 0));
         panelCentro.setOpaque(false);
         panelCentro.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
@@ -73,6 +82,7 @@ public class TableroGUI extends JFrame {
         panelCentro.add(panelPropio);
         panelCentro.add(panelEnemigo);
 
+      
         String textoEstado = "Jugador: " + nombreJugador;
         if (esServidor) {
             textoEstado += " (Servidor)";
@@ -115,6 +125,8 @@ public class TableroGUI extends JFrame {
         this.integrador = integrador;
     }
 
+  
+
     private JPanel crearPanelPropio() {
         JPanel panel = new JPanel(new GridLayout(TAMANIO, TAMANIO));
         celdasPropias = new JLabel[TAMANIO][TAMANIO];
@@ -122,14 +134,15 @@ public class TableroGUI extends JFrame {
         for (int fila = 0; fila < TAMANIO; fila++) {
             for (int col = 0; col < TAMANIO; col++) {
 
-                JLabel celda = new JLabel("~", SwingConstants.CENTER);
-                celda.setForeground(Color.DARK_GRAY);
-                celda.setBackground(Color.WHITE);
+                JLabel celda = new JLabel("", SwingConstants.CENTER);
                 celda.setOpaque(true);
                 celda.setBorder(
                         BorderFactory.createLineBorder(new Color(210, 210, 210)));
                 celda.setFont(new Font("Consolas", Font.PLAIN, 14));
                 celda.setPreferredSize(new Dimension(32, 32));
+
+                
+                pintarCeldaPropia(celda, '~');
 
                 panel.add(celda);
                 celdasPropias[fila][col] = celda;
@@ -137,6 +150,8 @@ public class TableroGUI extends JFrame {
         }
         return panel;
     }
+
+    
 
     private JPanel crearPanelEnemigo() {
         JPanel panel = new JPanel(new GridLayout(TAMANIO, TAMANIO));
@@ -149,13 +164,16 @@ public class TableroGUI extends JFrame {
                 boton.setPreferredSize(new Dimension(32, 32));
                 boton.setMargin(new Insets(0, 0, 0, 0));
 
+                boton.setOpaque(true);
+                boton.setContentAreaFilled(true);
+                boton.setBorder(
+                        BorderFactory.createLineBorder(new Color(210, 210, 210)));
+                boton.setBackground(COLOR_FONDO_AGUA_ENEMIGO);
+                boton.setFocusPainted(false);
+
                 if (iconoAgua != null) {
                     boton.setIcon(iconoAgua);
                 }
-
-                boton.setContentAreaFilled(false);
-                boton.setBorderPainted(true);
-                boton.setFocusPainted(false);
 
                 int f = fila;
                 int c = col;
@@ -178,6 +196,49 @@ public class TableroGUI extends JFrame {
         return panel;
     }
 
+    
+
+    private void pintarCeldaPropia(JLabel celda, char celdaModelo) {
+        celda.setOpaque(true);
+        celda.setIcon(null);
+
+        if (celdaModelo == '~') {
+            
+            celda.setBackground(COLOR_FONDO_AGUA_PROPIO);
+            celda.setForeground(COLOR_TEXTO_AGUA_PROPIO);
+            if (iconoAgua != null) {
+                celda.setIcon(iconoAgua);
+                celda.setText("");
+            } else {
+                celda.setText("~");
+            }
+        } else if (celdaModelo == 'X') {
+            
+            celda.setBackground(Color.WHITE);
+            celda.setForeground(Color.BLACK);
+            celda.setText("");
+            if (iconoImpacto != null) {
+                celda.setIcon(iconoImpacto);
+            } else {
+                celda.setBackground(Color.RED.darker());
+                celda.setForeground(Color.WHITE);
+                celda.setText("X");
+            }
+        } else if (celdaModelo == 'O') {
+            
+            celda.setBackground(Color.LIGHT_GRAY);
+            celda.setForeground(Color.BLACK);
+            celda.setText("O");
+        } else {
+            
+            celda.setBackground(Color.BLACK);
+            celda.setForeground(Color.WHITE);
+            celda.setText(String.valueOf(celdaModelo));
+        }
+    }
+
+    
+
     public void actualizarTableroPropioDesdeJuego() {
         int limite = juego.getTamanioTablero();
 
@@ -187,23 +248,7 @@ public class TableroGUI extends JFrame {
                 char celdaModelo = juego.getCeldaPropia(fila, col);
                 JLabel celda     = celdasPropias[fila][col];
 
-                if (celdaModelo == '~') {
-                    celda.setBackground(Color.WHITE);
-                    celda.setForeground(Color.DARK_GRAY);
-                    celda.setText("~");
-                } else if (celdaModelo == 'X') {
-                    celda.setBackground(Color.RED.darker());
-                    celda.setForeground(Color.WHITE);
-                    celda.setText("X");
-                } else if (celdaModelo == 'O') {
-                    celda.setBackground(Color.LIGHT_GRAY);
-                    celda.setForeground(Color.BLACK);
-                    celda.setText("O");
-                } else {
-                    celda.setBackground(Color.BLACK);
-                    celda.setForeground(Color.WHITE);
-                    celda.setText(String.valueOf(celdaModelo));
-                }
+                pintarCeldaPropia(celda, celdaModelo);
             }
         }
     }
@@ -214,29 +259,51 @@ public class TableroGUI extends JFrame {
         for (int fila = 0; fila < limite; fila++) {
             for (int col = 0; col < limite; col++) {
 
-                char celdaModelo = juego.getCeldaEnemiga(fila, col);
-                JButton boton    = botonesEnemigo[fila][col];
+                char    celdaModelo = juego.getCeldaEnemiga(fila, col);
+                JButton boton       = botonesEnemigo[fila][col];
+
+                boton.setOpaque(true);
+                boton.setBorder(
+                        BorderFactory.createLineBorder(new Color(210, 210, 210)));
 
                 if (celdaModelo == '?' || celdaModelo == '~') {
+                    
                     boton.setEnabled(true);
-                    boton.setIcon(iconoAgua);
+                    boton.setBackground(COLOR_FONDO_AGUA_ENEMIGO);
+                    boton.setForeground(COLOR_TEXTO_AGUA_PROPIO);
                     boton.setText("");
+                    boton.setIcon(iconoAgua);
                 } else if (celdaModelo == 'X') {
+                    
                     boton.setEnabled(false);
-                    boton.setIcon(null);
-                    boton.setText("X");
+                    boton.setBackground(Color.WHITE);
+                    boton.setText("");
+                    if (iconoImpacto != null) {
+                        boton.setIcon(iconoImpacto);
+                    } else {
+                        boton.setIcon(null);
+                        boton.setText("X");
+                    }
                 } else if (celdaModelo == 'O') {
+                    
                     boton.setEnabled(false);
+                    boton.setBackground(Color.LIGHT_GRAY);
+                    boton.setForeground(Color.BLACK);
                     boton.setIcon(null);
                     boton.setText("O");
                 } else {
+                    
                     boton.setEnabled(false);
+                    boton.setBackground(Color.BLACK);
+                    boton.setForeground(Color.WHITE);
                     boton.setIcon(null);
                     boton.setText(String.valueOf(celdaModelo));
                 }
             }
         }
     }
+
+    
 
     public void mostrarMensaje(String mensaje) {
         JOptionPane.showMessageDialog(this, mensaje);

@@ -12,9 +12,7 @@ public class ManejadorTurnoRemoto {
     private final PrintWriter salida;
     private final BufferedReader entrada;
 
-    public ManejadorTurnoRemoto(JuegoTablero juego,
-                                PrintWriter salida,
-                                BufferedReader entrada) {
+    public ManejadorTurnoRemoto(JuegoTablero juego, PrintWriter salida,BufferedReader entrada) {
         this.juego   = juego;
         this.salida  = salida;
         this.entrada = entrada;

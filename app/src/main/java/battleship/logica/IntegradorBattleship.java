@@ -50,7 +50,7 @@ public class IntegradorBattleship {
         intercambioNombres();
         prepararTablero();
 
-        // Musica de fondo durante la partida
+        
         ReproductorSonido.iniciarMusicaFondo();
 
         handshakeListo();
@@ -350,5 +350,22 @@ public class IntegradorBattleship {
 
         // Detener musica de fondo
         ReproductorSonido.detenerMusicaFondo();
+    }
+
+
+    public int getDisparoFila() {
+        return disparoFila;
+    }
+
+    public int getDisparoColumna() {
+        return disparoColumna;
+    }
+
+    public void setTurnoJugador(boolean turnoJugador) {
+        this.turnoJugador = turnoJugador;
+    }
+
+    public boolean isTurnoJugador() {
+        return turnoJugador;
     }
 }

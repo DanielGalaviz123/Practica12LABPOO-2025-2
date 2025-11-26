@@ -14,10 +14,7 @@ public class ManejadorTurnoLocal {
     private final BufferedReader entrada;
     private final Scanner scanner;
 
-    public ManejadorTurnoLocal(JuegoTablero juego,
-                               PrintWriter salida,
-                               BufferedReader entrada,
-                               Scanner scanner) {
+    public ManejadorTurnoLocal(JuegoTablero juego,PrintWriter salida,BufferedReader entrada,Scanner scanner) {
         this.juego   = juego;
         this.salida  = salida;
         this.entrada = entrada;

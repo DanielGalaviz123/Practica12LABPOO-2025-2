@@ -7,10 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class BarcoTest {
 
-    /**
-     * Clase de prueba mínima para poder instanciar un Barco,
-     * porque Barco es abstracto.
-     */
+    //.
     private static class BarcoPrueba extends Barco {
         public BarcoPrueba(int tamanio) {
             super("PRUEBA", 'P', tamanio);

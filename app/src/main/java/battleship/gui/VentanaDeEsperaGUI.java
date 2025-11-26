@@ -5,10 +5,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * Ventana simple que muestra un mensaje de espera
- * mientras el otro jugador se conecta.
- */
+//....
 public class VentanaDeEsperaGUI extends JDialog {
 
     private JLabel etiquetaMensaje;
@@ -16,7 +13,7 @@ public class VentanaDeEsperaGUI extends JDialog {
     private boolean cancelado;
 
     public VentanaDeEsperaGUI(Frame ventanaPadre, String mensaje) {
-        // false => NO modal, asi no bloquea la aplicacion
+        
         super(ventanaPadre, "Esperando al otro jugador", false);
 
         etiquetaMensaje = new JLabel(mensaje, SwingConstants.CENTER);
@@ -54,17 +51,22 @@ public class VentanaDeEsperaGUI extends JDialog {
         });
     }
 
-    /**
-     * Permite cambiar el mensaje mostrado mientras se espera.
-     */
+    
     public void actualizarMensaje(String nuevoMensaje) {
         etiquetaMensaje.setText(nuevoMensaje);
     }
 
-    /**
-     * Indica si el usuario presiono el boton Cancelar.
-     */
+    
     public boolean fueCancelado() {
         return cancelado;
+    }
+
+
+    public String getTextoMensaje() {
+        return etiquetaMensaje.getText();
+    }
+
+    public JButton getBotonCancelar() {
+        return botonCancelar;
     }
 }
